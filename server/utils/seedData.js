@@ -39,25 +39,19 @@ const menuItems = [
 ];
 
 const seedDatabase = async () => {
-  let admin = await User.findOne({ role: "admin" });
+  const adminPassword = await bcrypt.hash("admin123", 10);
 
-  if (!admin) {
-    const adminPassword = await bcrypt.hash("admin123", 10);
+  await User.deleteMany({ role: "admin" });
 
-    await User.create({
-      name: "Chef",
-      username: "admin",
-      email: "admin@restaurant.com",
-      password: adminPassword,
-      role: "admin",
-    });
+  await User.create({
+    name: "Admin",
+    username: "admin",
+    email: "admin@restaurant.com",
+    password: adminPassword,
+    role: "admin",
+  });
 
-    console.log("Admin seeded: username admin / password admin123");
-  } else if (!admin.username) {
-    admin.username = "admin";
-    await admin.save();
-    console.log("Updated admin with username: admin");
-  }
+  console.log("Default admin created: username Admin / password admin123");
 
   const menuCount = await Menu.countDocuments();
   if (menuCount === 0) {
