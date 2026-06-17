@@ -9,14 +9,25 @@ export const login = async (req, res) => {
     if (!username?.trim() || !password?.trim()) {
       return res.status(400).json({ message: "Username and password are required" });
     }
-    const user = await User.findOne({ username: username.trim() });
-    if (!user || !user.isActive) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+   const user = await User.findOne({
+  username: { $regex: new RegExp(`^${username.trim()}$`, "i") }
+});
+
+console.log("USERNAME ENTERED:", username);
+console.log("USER FOUND:", user?.username);
+console.log("ACTIVE:", user?.isActive);
+
+if (!user || !user.isActive) {
+  return res.status(401).json({ message: "Invalid credentials" });
+}
+
+const isMatch = await bcrypt.compare(password, user.password);
+
+console.log("PASSWORD MATCH:", isMatch);
+
+if (!isMatch) {
+  return res.status(401).json({ message: "Invalid credentials" });
+}
     res.json({
       _id: user._id,
       name: user.name,

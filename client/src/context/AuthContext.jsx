@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
 
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
+
       api
         .get("/auth/me")
         .then((res) => {
@@ -30,17 +31,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password, role) => {
-    const { data } = await api.post("/auth/login", { email, password, role });
+  const login = async (username, password) => {
+    const { data } = await api.post("/auth/login", {
+      username,
+      password,
+    });
+
     localStorage.setItem("token", data.token);
+
     const userData = {
       _id: data._id,
       name: data.name,
-      email: data.email,
+      username: data.username,
       role: data.role,
     };
+
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
+
     return userData;
   };
 

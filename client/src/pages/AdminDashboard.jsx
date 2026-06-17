@@ -11,9 +11,10 @@ import WaiterList from "../components/admin/WaiterList";
 
 const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+
+  if (hour < 12) return "आपका दिन शुभ हो";
+  if (hour < 17) return "आपका दिन मंगलमय हो";
+  return "आपकी शाम शुभ हो";
 };
 
 const AdminDashboard = () => {
@@ -77,11 +78,8 @@ const AdminDashboard = () => {
             <h1 className="font-serif text-3xl md:text-4xl text-slate-900 mb-1">
               {getGreeting()}, {user?.name || "Chef"} 👨‍🍳
             </h1>
-            <p className="text-slate-600 text-sm">
-              आशा है आपका दिन मंगलमय हो।
-            </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-4 py-2">
               {today}
             </span>
@@ -92,6 +90,15 @@ const AdminDashboard = () => {
             >
               Take Order
             </button>
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById("expense-section")?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="text-xs bg-emerald-600 text-white px-4 py-2 rounded-full hover:bg-emerald-700 transition"
+            >
+              दैनिक खर्च
+            </button>
           </div>
         </header>
 
@@ -101,17 +108,8 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <RecentOrders orders={orders} />
-          <div className="flex flex-col gap-4">
-            <button
-              type="button"
-              onClick={() => document.getElementById("expense-section").scrollIntoView({ behavior: "smooth" })}
-              className="text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors w-fit"
-            >
-              View All Expenses
-            </button>
-            <div id="expense-section">
-              <RecentExpenses expenses={expenses} onExpenseAdded={fetchData} />
-            </div>
+          <div id="expense-section">
+            <RecentExpenses expenses={expenses} onExpenseAdded={fetchData} />
           </div>
         </div>
 
@@ -131,14 +129,14 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Menu Manager</h2>
-                <p className="text-slate-600 text-sm">Manage menu items on a dedicated page.</p>
+                <p className="text-slate-600 text-sm">Manage Menu items</p>
               </div>
               <div>
                 <a
                   href="/admin/menu-manager"
                   className="text-xs bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
                 >
-                  Open Menu Manager
+                  Edit Menu
                 </a>
               </div>
             </div>

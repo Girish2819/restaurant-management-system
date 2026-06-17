@@ -15,7 +15,7 @@ const AuthLogin = () => {
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = 0.2;
+      videoRef.current.playbackRate = 0.5;
     }
   }, []);
 
@@ -64,11 +64,11 @@ const AuthLogin = () => {
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
         <div className="w-full max-w-md text-center">
           <p className="mb-3 text-sm uppercase tracking-[0.4em] text-emerald-400">
-            RESTURENT
+            RESTAURANT
           </p>
 
           <h1 className="mb-3 text-5xl font-bold text-white">
-            Restaurant Login
+            Login
           </h1>
 
           <p className="mb-10 text-white/80">

@@ -37,16 +37,15 @@ const Welcome = () => {
 
           <div className="space-y-4">
             <p className="text-sm uppercase tracking-[0.4em] text-slate-300">
-              RestuRent
+              Restaurant
             </p>
 
             <h1 className="text-4xl md:text-5xl font-semibold">
-              A Modern Restaurant Management Experience
+              NEW RK LINE HOTEL & FAMILY RESTAURANT
             </h1>
 
             <p className="text-slate-200 max-w-2xl mx-auto text-base md:text-lg">
-              Launch your restaurant with a streamlined login experience and
-              keep your restaurant operations moving.
+              घर जैसा खाना, स्वाद ऐसा जो दिल को छू जाए।
             </p>
           </div>
 

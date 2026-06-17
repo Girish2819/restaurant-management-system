@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import { formatCurrency } from "../utils/format";
@@ -46,13 +46,14 @@ const groupOrdersByDate = (orders) => {
 
 const WaiterDashboard = () => {
   const { user, logout } = useAuth();
+  const dropdownRef = useRef(null);
   const [orders, setOrders] = useState([]);
   const [orderCount, setOrderCount] = useState(0);
   const [loading, setLoading] = useState(true);
-
+  const videoRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuItems, setMenuItems] = useState([]);
-  const [selectedMenuItem, setSelectedMenuItem] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
@@ -91,32 +92,67 @@ const WaiterDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAddItem = (e) => {
-    e.preventDefault();
-    if (!selectedMenuItem) {
-      setOrderError("Select an item from the menu");
-      return;
-    }
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    setOrderError("");
-    setCartItems((prev) => [
-      ...prev,
-      { ...selectedMenuItem, quantity: 1 },
-    ]);
-    setSelectedMenuItem(null);
+  useEffect(() => {
+  if (videoRef.current) {
+    videoRef.current.playbackRate = 0.5;
+  }
+}, []);
+
+  const handleSelectItem = (item) => {
+    const existingItem = cartItems.find((cart) => cart._id === item._id);
+    if (existingItem) {
+      setCartItems((prev) =>
+        prev.map((cart) =>
+          cart._id === item._id
+            ? { ...cart, quantity: cart.quantity + 1 }
+            : cart
+        )
+      );
+    } else {
+      setCartItems((prev) => [...prev, { ...item, quantity: 1 }]);
+    }
     setSearchQuery("");
+    setShowDropdown(false);
+    setOrderError("");
   };
 
-  const handleSelectMenuItem = (e) => {
-    const item = menuItems.find((menuItem) => menuItem._id === e.target.value);
-    setSelectedMenuItem(item || null);
+  const handleUpdateQuantity = (index, delta) => {
+    setCartItems((prev) =>
+      prev
+        .map((item, i) =>
+          i === index
+            ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
   };
 
   const handleRemoveItem = (index) => {
     setCartItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const cartTotal = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const cartTotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const filteredItems = menuItems.filter(
+    (item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleCompleteOrder = async () => {
     if (!cartItems.length) {
@@ -128,8 +164,15 @@ const WaiterDashboard = () => {
     setSubmitting(true);
 
     try {
-      await api.post("/orders", { items: cartItems });
+      await api.post("/orders", {
+        items: cartItems.map((item) => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
       setCartItems([]);
+      setSearchQuery("");
       await fetchOrders();
     } catch (err) {
       setOrderError(err.response?.data?.message || "Failed to save order");
@@ -149,99 +192,153 @@ const WaiterDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-3">
-          <div>
-            <h1 className="font-serif text-2xl text-slate-900 mb-1">
-              Hello, {user?.name}
-            </h1>
-            <p className="text-slate-600 text-sm">@{user?.username}</p>
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="text-xs text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            Logout
-          </button>
-        </header>
+    
+    <div className="relative min-h-screen overflow-hidden">
+  {/* Background Video */}
+  <video
+    ref={videoRef}
+    autoPlay
+    loop
+    muted
+    playsInline
+    preload="auto"
+    className="absolute inset-0 h-full w-full object-cover"
+  >
+    <source src="/videos/restaurant-bg.mp4" type="video/mp4" />
+  </video>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6 text-center shadow-sm">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
-            Total Orders
+  {/* Dark Overlay */}
+  <div className="absolute inset-0 bg-black/60" />
+
+  {/* Content */}
+  <div className="relative z-10">
+    <div className="max-w-2xl mx-auto px-6 py-8">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-3">
+        <div>
+          <h1 className="font-serif text-3xl text-white mb-1">
+            Hello, {user?.name}
+          </h1>
+
+          <p className="text-white/70 text-sm">
+            @{user?.username}
           </p>
-          <p className="text-5xl font-semibold text-slate-900">{orderCount}</p>
-          <p className="text-slate-600 text-xs mt-2">completed by you</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">
-            New Order
-          </h2>
+        <button
+          type="button"
+          onClick={logout}
+          className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-red-500 transition-all duration-300"
+        >
+          Logout
+        </button>
+      </header>
 
-          <form onSubmit={handleAddItem} className="grid gap-2 md:grid-cols-[1fr_240px_120px] items-end mb-4">
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-500 mb-2">Search menu</label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search item"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-slate-300"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-500 mb-2">Menu item</label>
-              <select
-                value={selectedMenuItem?.name || ""}
-                onChange={handleSelectMenuItem}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-slate-300"
-              >
-                <option value="">Select menu item</option>
-                {menuItems
-                  .filter((item) =>
-                    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .map((item) => (
-                    <option key={item._id} value={item._id}>
-                      {item.code} — {item.name} — ₹{item.price}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="h-12 px-5 bg-slate-900 border border-slate-900 text-white text-sm rounded-lg hover:bg-slate-800"
-            >
-              Add
-            </button>
-          </form>
-          {selectedMenuItem && (
-            <div className="text-sm text-slate-600 mb-4">
-              Price: <span className="font-semibold text-slate-900">₹{selectedMenuItem.price}</span>
-            </div>
-          )}
+      {/* Total Orders */}
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 mb-6 text-center shadow-2xl">
+        <p className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-2">
+          Total Orders
+        </p>
+
+        <p className="text-5xl font-semibold text-white">
+          {orderCount}
+        </p>
+
+        <p className="text-white/70 text-xs mt-2">
+          completed by you
+        </p>
+      </div>
+
+      {/* New Order */}
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 mb-6 shadow-2xl">
+        <h2 className="text-xs font-semibold text-white/70 uppercase tracking-widest mb-5">
+          New Order
+        </h2>
+
+        <div className="relative mb-4" ref={dropdownRef}>
+          <label className="text-xs font-semibold text-white/70 mb-2 block">
+            Search & select item
+          </label>
+
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            placeholder="Search by name, code or category..."
+            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          />
+            {showDropdown && searchQuery && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item) => (
+                    <button
+                      key={item._id}
+                      type="button"
+                      onClick={() => handleSelectItem(item)}
+                      className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition flex items-center justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900">
+                          {item.code} — {item.name}
+                        </p>
+                        <p className="text-xs text-slate-500">{item.category}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-emerald-600 ml-2 shrink-0">
+                        ₹{item.price}
+                      </p>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-center text-slate-500 text-sm">
+                    No items found
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {cartItems.length > 0 && (
             <div className="mb-4">
-              <div className="space-y-2 mb-3">
+              <div className="space-y-3 mb-4">
                 {cartItems.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5"
+                    className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
                   >
-                    <span className="text-sm text-slate-900">{item.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-emerald-600">
-                        {formatCurrency(item.price)}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900">{item.name}</p>
+                      <p className="text-xs text-slate-500">{item.code}</p>
+                    </div>
+                    <div className="flex items-center gap-3 ml-4">
+                      <div className="flex items-center gap-2 border border-slate-200 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQuantity(index, -1)}
+                          className="px-2 py-1 text-slate-600 hover:bg-slate-200 transition"
+                        >
+                          −
+                        </button>
+                        <span className="px-3 py-1 text-sm font-medium text-slate-900 min-w-max">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQuantity(index, 1)}
+                          className="px-2 py-1 text-slate-600 hover:bg-slate-200 transition"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span className="text-sm font-semibold text-emerald-600 min-w-max">
+                        {formatCurrency(item.price * item.quantity)}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="text-slate-400 hover:text-red-500 text-xs"
+                        className="text-slate-400 hover:text-red-500 text-lg transition"
                       >
                         ✕
                       </button>
@@ -249,15 +346,16 @@ const WaiterDashboard = () => {
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-                <span className="text-sm text-slate-600">
-                  Total: <span className="text-slate-900 font-medium">{formatCurrency(cartTotal)}</span>
-                </span>
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Total amount</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(cartTotal)}</p>
+                </div>
                 <button
                   type="button"
                   onClick={handleCompleteOrder}
                   disabled={submitting}
-                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50"
+                  className="px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
                 >
                   {submitting ? "Saving..." : "Complete Order"}
                 </button>
@@ -266,7 +364,7 @@ const WaiterDashboard = () => {
           )}
 
           {orderError && (
-            <p className="text-red-400 text-xs">{orderError}</p>
+            <p className="text-red-500 text-xs">{orderError}</p>
           )}
         </div>
 
@@ -312,6 +410,7 @@ const WaiterDashboard = () => {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 };

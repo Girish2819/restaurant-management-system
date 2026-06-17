@@ -91,10 +91,13 @@ export const createOrder = async (req, res) => {
 
 export const getWaiterOrderCount = async (req, res) => {
   try {
-    const count = await Order.countDocuments({
-      waiter: req.user._id,
-      status: "done",
-    });
+    const filter = { status: "done" };
+
+    if (req.user.role === "waiter") {
+      filter.waiter = req.user._id;
+    }
+
+    const count = await Order.countDocuments(filter);
 
     res.json({ count });
   } catch (error) {

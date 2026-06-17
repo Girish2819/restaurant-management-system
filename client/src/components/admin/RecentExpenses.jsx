@@ -50,7 +50,7 @@ const AddExpense = ({ onAdded }) => {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Item name"
+          placeholder="Name"
           required
           className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
         />
@@ -68,10 +68,8 @@ const AddExpense = ({ onAdded }) => {
           onChange={(e) => setCategory(e.target.value)}
           className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
         >
-          <option value="Kirana">Kirana</option>
           <option value="Market">Market</option>
           <option value="Staff">Staff</option>
-          <option value="other">Other</option>
         </select>
         <button
           type="submit"

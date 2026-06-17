@@ -48,20 +48,17 @@ const KpiCards = ({ stats }) => {
       <KpiCard
         label="Total Orders"
         value={s.totalOrders}
-        subtext={ordersDiffText}
-        subtextColor={s.ordersDiff >= 0 ? "text-emerald-600" : "text-amber-600"}
+        
       />
       <KpiCard
         label="Total Revenue"
         value={formatCurrency(s.totalRevenue)}
-        subtext={revenueChangeText}
-        subtextColor="text-emerald-600"
+        
       />
       <KpiCard
         label="Total Expenses"
         value={formatCurrency(s.totalExpenses)}
-        subtext={expenseChangeText}
-        subtextColor="text-amber-600"
+        
       />
       <KpiCard
         label="Staff Cost"
@@ -72,8 +69,7 @@ const KpiCards = ({ stats }) => {
       <KpiCard
         label="Net Profit"
         value={formatCurrency(s.netProfit)}
-        subtext={s.margin > 0 ? `${s.margin}% margin` : "0% margin"}
-        subtextColor={s.netProfit >= 0 ? "text-emerald-600" : "text-red-600"}
+        
       />
     </div>
   );
