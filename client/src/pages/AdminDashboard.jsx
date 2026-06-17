@@ -72,7 +72,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <header className="flex flex-col sm:flex-row items-start justify-between mb-8 gap-4">
           <div>
             <h1 className="font-serif text-3xl md:text-4xl text-slate-900 mb-1">

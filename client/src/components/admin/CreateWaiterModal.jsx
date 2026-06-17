@@ -131,18 +131,18 @@ const CreateWaiterModal = ({ isOpen, onClose, onCreated }) => {
                   <option value="gents">Gents</option>
                 </select>
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 py-2.5 rounded-lg border border-[#2a2a2a] text-gray-400 hover:text-white transition-colors"
+                  className="flex-1 py-2.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-lg bg-white text-black font-medium hover:bg-gray-100 disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-lg bg-slate-900 text-white font-medium hover:bg-slate-800 disabled:opacity-50 min-h-[44px]"
                 >
                   {loading ? "Creating..." : "Create Member"}
                 </button>

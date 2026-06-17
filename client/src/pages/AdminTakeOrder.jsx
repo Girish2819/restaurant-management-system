@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
+import MenuItemSearch from "../components/MenuItemSearch";
+import CartItemsList from "../components/CartItemsList";
 import { formatCurrency } from "../utils/format";
-
 
 const formatOrderTime = (dateString) =>
   new Date(dateString).toLocaleTimeString("en-IN", {
@@ -41,15 +41,11 @@ const groupOrdersByDate = (orders) => {
 
 const AdminTakeOrder = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const dropdownRef = useRef(null);
   const videoRef = useRef(null);
   const [orders, setOrders] = useState([]);
   const [orderCount, setOrderCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
   const [menuItems, setMenuItems] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
@@ -89,20 +85,10 @@ const AdminTakeOrder = () => {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.5;
+    }
   }, []);
-  
-  useEffect(() => {
-  if (videoRef.current) {
-    videoRef.current.playbackRate = 0.5;
-  }
-}, []);
 
   const handleSelectItem = (item) => {
     const existingItem = cartItems.find((cart) => cart._id === item._id);
@@ -117,8 +103,6 @@ const AdminTakeOrder = () => {
     } else {
       setCartItems((prev) => [...prev, { ...item, quantity: 1 }]);
     }
-    setSearchQuery("");
-    setShowDropdown(false);
     setOrderError("");
   };
 
@@ -143,14 +127,7 @@ const AdminTakeOrder = () => {
     0
   );
 
-  const filteredItems = menuItems.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleCompleteOrder = async (e) => {
-    e.preventDefault();
+  const handleCompleteOrder = async () => {
     if (!cartItems.length) {
       setOrderError("Add at least one menu item");
       return;
@@ -160,24 +137,17 @@ const AdminTakeOrder = () => {
     setSubmitting(true);
 
     try {
-      const orderPayload = {
+      await api.post("/orders", {
         items: cartItems.map((item) => ({
-          _id: item._id,
           name: item.name,
-          code: item.code,
           price: item.price,
           quantity: item.quantity,
-          category: item.category,
         })),
         orderType: "dine-in",
-      };
-      const response = await api.post("/orders", orderPayload);
+      });
       setCartItems([]);
-      setSearchQuery("");
       await fetchOrders();
-      alert("Order saved successfully!");
     } catch (err) {
-      console.error("Order error:", err);
       setOrderError(
         err.response?.data?.message || "Failed to save order. Please try again."
       );
@@ -197,141 +167,111 @@ const AdminTakeOrder = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-  {/* Background Video */}
-  <video
-    ref={videoRef}
-    autoPlay
-    loop
-    muted
-    playsInline
-    className="absolute inset-0 h-full w-full object-cover"
-  >
-    <source src="/videos/restaurant-bg.mp4" type="video/mp4" />
-  </video>
+    <div className="relative min-h-screen">
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="fixed inset-0 h-full w-full object-cover -z-20"
+      >
+        <source src="/videos/restaurant-bg.mp4" type="video/mp4" />
+      </video>
 
-  {/* Dark Overlay */}
-  <div className="absolute inset-0 bg-black/60" />
+      <div className="fixed inset-0 bg-black/60 -z-10" />
 
-  {/* Content */}
-  <div className="relative z-10">
-    <div className="max-w-4xl mx-auto px-6 py-8">
-
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <div className="flex items-center gap-4">
-         <button
-  type="button"
-  onClick={() => navigate("/admin")}
-  className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-emerald-500 hover:text-slate-950 hover:scale-105 transition-all duration-300 shadow-lg"
->
-  <span className="text-xl">←</span>
-</button>
-
-          <div>
-            <h1 className="font-serif text-3xl md:text-4xl text-white mb-1">
-              Admin Order Board
-            </h1>
-
-            <p className="text-white/70 text-sm">
-              Place orders directly when waiters are unavailable.
-            </p>
+      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/admin")}
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-emerald-500 transition min-h-[44px] min-w-[44px]"
+              aria-label="Back to dashboard"
+            >
+              ←
+            </button>
+            <div>
+              <h1 className="font-serif text-2xl sm:text-3xl text-white">Place Order</h1>
+              <p className="text-white/60 text-sm">Admin order board</p>
+            </div>
           </div>
-        </div>
+          <span className="text-xs text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
+            {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long" })}
+          </span>
+        </header>
 
-        <div className="text-xs text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
-          {new Date().toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "long",
-          })}
-        </div>
-      </header>
+        <div className="relative z-50 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 mb-4 shadow-xl overflow-visible">
+          <h2 className="text-sm font-semibold text-white mb-4">New Order</h2>
 
-      {/* New Order Card */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 mb-6 shadow-2xl">
-        <h2 className="text-sm font-semibold text-white mb-4">
-          New Order
-        </h2>
+          <MenuItemSearch
+            menuItems={menuItems}
+            onSelect={handleSelectItem}
+            label="Search & select item"
+            labelClassName="text-white/70"
+            placeholder="Type item name, code or category..."
+            inputClassName="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 min-h-[48px]"
+          />
 
-        <form onSubmit={handleCompleteOrder} className="mb-4">
-          <div className="relative mb-4" ref={dropdownRef}>
-            <label className="text-xs font-semibold text-white/70 mb-2 block">
-              Search & select item
-            </label>
-
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              placeholder="Search by name, code or category..."
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-            />
-
-            {showDropdown && searchQuery && (
-              <div className="absolute z-10 w-full mt-1 bg-slate-900/95 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                {filteredItems.length > 0 ? (
-                  filteredItems.map((item) => (
-                    <button
-                      key={item._id}
-                      type="button"
-                      onClick={() => handleSelectItem(item)}
-                      className="w-full text-left px-4 py-3 hover:bg-white/10 border-b border-white/10 last:border-b-0 transition flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="text-white text-sm font-medium">
-                          {item.code} — {item.name}
-                        </p>
-
-                        <p className="text-white/60 text-xs">
-                          {item.category}
-                        </p>
-                      </div>
-
-                      <p className="text-emerald-400 font-semibold">
-                        ₹{item.price}
-                      </p>
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-4 py-3 text-center text-white/60 text-sm">
-                    No items found
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Keep your existing cartItems section exactly as it is */}
+          <CartItemsList
+            cartItems={cartItems}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+            cartTotal={cartTotal}
+            onComplete={handleCompleteOrder}
+            submitting={submitting}
+            variant="glass"
+          />
 
           {orderError && (
-            <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-xs">
-              {orderError}
-            </div>
+            <p className="text-red-300 text-sm mt-3">{orderError}</p>
           )}
-        </form>
-      </div>
-
-      {/* Order History Card */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-semibold text-white">
-            Order History
-          </h2>
-
-          <span className="text-xs text-white/60">
-            Total completed: {orderCount}
-          </span>
         </div>
 
-        {/* Keep your existing Order History code exactly as it is */}
-      </div>
+        <div className="relative z-0 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+            <h2 className="text-sm font-semibold text-slate-900">Order History</h2>
+            <span className="text-xs text-slate-500">Total completed: {orderCount}</span>
+          </div>
 
+          {groupedOrders.length === 0 ? (
+            <p className="text-slate-600 text-sm text-center py-8">No completed orders yet</p>
+          ) : (
+            <div className="space-y-6">
+              {groupedOrders.map((group) => (
+                <div key={group.label}>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">
+                    {group.label}
+                  </p>
+                  <div className="space-y-3">
+                    {group.orders.map((order) => (
+                      <div
+                        key={order._id}
+                        className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 pb-3 border-b border-slate-200 last:border-0 last:pb-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-slate-900 text-sm font-medium break-words">
+                            {order.orderLabel}
+                          </p>
+                          <p className="text-slate-500 text-xs mt-0.5">
+                            {formatOrderTime(order.createdAt)}
+                          </p>
+                        </div>
+                        <p className="text-emerald-600 text-sm font-medium shrink-0">
+                          {formatCurrency(order.amount)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-</div>
   );
 };
 

@@ -39,7 +39,7 @@ const WaiterList = ({ waiters, onRefresh, onAddWaiter }) => {
         {waiters.map((waiter) => (
           <div
             key={waiter._id}
-            className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200 last:border-0 last:pb-0"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-slate-200 last:border-0 last:pb-0"
           >
             <div>
               <p className="text-slate-900 text-sm font-medium">{waiter.name}</p>
@@ -53,7 +53,7 @@ const WaiterList = ({ waiters, onRefresh, onAddWaiter }) => {
               type="button"
               onClick={() => handleDelete(waiter._id)}
               disabled={deletingId === waiter._id}
-              className="text-xs text-red-600 hover:text-red-700 px-3 py-1.5 rounded border border-red-200 hover:border-red-300 disabled:opacity-50"
+              className="w-full sm:w-auto text-xs text-red-600 hover:text-red-700 px-3 py-2 rounded border border-red-200 hover:border-red-300 disabled:opacity-50 min-h-[36px]"
             >
               {deletingId === waiter._id ? "Deleting..." : "Delete"}
             </button>

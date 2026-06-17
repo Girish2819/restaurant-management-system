@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
+import MenuItemSearch from "../components/MenuItemSearch";
+import CartItemsList from "../components/CartItemsList";
 import { formatCurrency } from "../utils/format";
 
 const formatOrderTime = (dateString) =>
@@ -46,14 +48,11 @@ const groupOrdersByDate = (orders) => {
 
 const WaiterDashboard = () => {
   const { user, logout } = useAuth();
-  const dropdownRef = useRef(null);
+  const videoRef = useRef(null);
   const [orders, setOrders] = useState([]);
   const [orderCount, setOrderCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const videoRef = useRef(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [menuItems, setMenuItems] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
@@ -93,20 +92,10 @@ const WaiterDashboard = () => {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.5;
+    }
   }, []);
-
-  useEffect(() => {
-  if (videoRef.current) {
-    videoRef.current.playbackRate = 0.5;
-  }
-}, []);
 
   const handleSelectItem = (item) => {
     const existingItem = cartItems.find((cart) => cart._id === item._id);
@@ -121,8 +110,6 @@ const WaiterDashboard = () => {
     } else {
       setCartItems((prev) => [...prev, { ...item, quantity: 1 }]);
     }
-    setSearchQuery("");
-    setShowDropdown(false);
     setOrderError("");
   };
 
@@ -147,13 +134,6 @@ const WaiterDashboard = () => {
     0
   );
 
-  const filteredItems = menuItems.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleCompleteOrder = async () => {
     if (!cartItems.length) {
       setOrderError("Add at least one menu item");
@@ -172,7 +152,6 @@ const WaiterDashboard = () => {
         })),
       });
       setCartItems([]);
-      setSearchQuery("");
       await fetchOrders();
     } catch (err) {
       setOrderError(err.response?.data?.message || "Failed to save order");
@@ -192,186 +171,77 @@ const WaiterDashboard = () => {
   }
 
   return (
-    
-    <div className="relative min-h-screen overflow-hidden">
-  {/* Background Video */}
-  <video
-    ref={videoRef}
-    autoPlay
-    loop
-    muted
-    playsInline
-    preload="auto"
-    className="absolute inset-0 h-full w-full object-cover"
-  >
-    <source src="/videos/restaurant-bg.mp4" type="video/mp4" />
-  </video>
+    <div className="relative min-h-screen">
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="fixed inset-0 h-full w-full object-cover -z-20"
+      >
+        <source src="/videos/restaurant-bg.mp4" type="video/mp4" />
+      </video>
 
-  {/* Dark Overlay */}
-  <div className="absolute inset-0 bg-black/60" />
+      <div className="fixed inset-0 bg-black/60 -z-10" />
 
-  {/* Content */}
-  <div className="relative z-10">
-    <div className="max-w-2xl mx-auto px-6 py-8">
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-3">
-        <div>
-          <h1 className="font-serif text-3xl text-white mb-1">
-            Hello, {user?.name}
-          </h1>
+      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl text-white mb-1">
+              Hello, {user?.name}
+            </h1>
+            <p className="text-white/70 text-sm">@{user?.username}</p>
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-red-500 transition min-h-[44px]"
+          >
+            Logout
+          </button>
+        </header>
 
-          <p className="text-white/70 text-sm">
-            @{user?.username}
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 mb-4 text-center shadow-xl">
+          <p className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-2">
+            Total Orders
           </p>
+          <p className="text-4xl sm:text-5xl font-semibold text-white">{orderCount}</p>
+          <p className="text-white/70 text-xs mt-2">completed by you</p>
         </div>
 
-        <button
-          type="button"
-          onClick={logout}
-          className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-red-500 transition-all duration-300"
-        >
-          Logout
-        </button>
-      </header>
-
-      {/* Total Orders */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 mb-6 text-center shadow-2xl">
-        <p className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-2">
-          Total Orders
-        </p>
-
-        <p className="text-5xl font-semibold text-white">
-          {orderCount}
-        </p>
-
-        <p className="text-white/70 text-xs mt-2">
-          completed by you
-        </p>
-      </div>
-
-      {/* New Order */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 mb-6 shadow-2xl">
-        <h2 className="text-xs font-semibold text-white/70 uppercase tracking-widest mb-5">
+        <div className="relative z-50 overflow-visible bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 mb-4 shadow-xl">          <h2 className="text-xs font-semibold text-white/70 uppercase tracking-widest mb-4">
           New Order
         </h2>
 
-        <div className="relative mb-4" ref={dropdownRef}>
-          <label className="text-xs font-semibold text-white/70 mb-2 block">
-            Search & select item
-          </label>
-
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowDropdown(true);
-            }}
-            onFocus={() => setShowDropdown(true)}
-            placeholder="Search by name, code or category..."
-            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          <MenuItemSearch
+            menuItems={menuItems}
+            onSelect={handleSelectItem}
+            label="Search & select item"
+            labelClassName="text-white/70"
+            placeholder="Type item name, code or category..."
+            inputClassName="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-base placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 min-h-[48px]"
           />
-            {showDropdown && searchQuery && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {filteredItems.length > 0 ? (
-                  filteredItems.map((item) => (
-                    <button
-                      key={item._id}
-                      type="button"
-                      onClick={() => handleSelectItem(item)}
-                      className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition flex items-center justify-between"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900">
-                          {item.code} — {item.name}
-                        </p>
-                        <p className="text-xs text-slate-500">{item.category}</p>
-                      </div>
-                      <p className="text-sm font-semibold text-emerald-600 ml-2 shrink-0">
-                        ₹{item.price}
-                      </p>
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-4 py-3 text-center text-slate-500 text-sm">
-                    No items found
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          {cartItems.length > 0 && (
-            <div className="mb-4">
-              <div className="space-y-3 mb-4">
-                {cartItems.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-4 py-3"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900">{item.name}</p>
-                      <p className="text-xs text-slate-500">{item.code}</p>
-                    </div>
-                    <div className="flex items-center gap-3 ml-4">
-                      <div className="flex items-center gap-2 border border-slate-200 rounded-lg">
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateQuantity(index, -1)}
-                          className="px-2 py-1 text-slate-600 hover:bg-slate-200 transition"
-                        >
-                          −
-                        </button>
-                        <span className="px-3 py-1 text-sm font-medium text-slate-900 min-w-max">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateQuantity(index, 1)}
-                          className="px-2 py-1 text-slate-600 hover:bg-slate-200 transition"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <span className="text-sm font-semibold text-emerald-600 min-w-max">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(index)}
-                        className="text-slate-400 hover:text-red-500 text-lg transition"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                <div>
-                  <p className="text-xs text-slate-500 mb-1">Total amount</p>
-                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(cartTotal)}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCompleteOrder}
-                  disabled={submitting}
-                  className="px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
-                >
-                  {submitting ? "Saving..." : "Complete Order"}
-                </button>
-              </div>
-            </div>
-          )}
+          <CartItemsList
+            cartItems={cartItems}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+            cartTotal={cartTotal}
+            onComplete={handleCompleteOrder}
+            submitting={submitting}
+            variant="glass"
+          />
 
           {orderError && (
-            <p className="text-red-500 text-xs">{orderError}</p>
+            <p className="text-red-300 text-sm mt-3">{orderError}</p>
           )}
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">
-            Order History
-          </h2>
+        <div className="relative z-0 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xl">          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+          Order History
+        </h2>
 
           {groupedOrders.length === 0 ? (
             <p className="text-slate-600 text-sm text-center py-8">
@@ -388,10 +258,10 @@ const WaiterDashboard = () => {
                     {group.orders.map((order) => (
                       <div
                         key={order._id}
-                        className="flex items-start justify-between gap-4 pb-3 border-b border-slate-200 last:border-0 last:pb-0"
+                        className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 pb-3 border-b border-slate-200 last:border-0 last:pb-0"
                       >
                         <div className="min-w-0">
-                          <p className="text-slate-900 text-sm font-medium">
+                          <p className="text-slate-900 text-sm font-medium break-words">
                             {order.orderLabel}
                           </p>
                           <p className="text-slate-500 text-xs mt-0.5">
@@ -410,7 +280,6 @@ const WaiterDashboard = () => {
           )}
         </div>
       </div>
-    </div>
     </div>
   );
 };

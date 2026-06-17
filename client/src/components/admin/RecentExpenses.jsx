@@ -45,14 +45,14 @@ const AddExpense = ({ onAdded }) => {
       {error && (
         <p className="text-red-500 text-xs mb-2">{error}</p>
       )}
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto] gap-2">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
           required
-          className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300 min-h-[44px]"
         />
         <input
           type="number"
@@ -61,20 +61,21 @@ const AddExpense = ({ onAdded }) => {
           placeholder="Amount ₹"
           required
           min="1"
-          className="w-full sm:w-28 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300 min-h-[44px]"
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300 min-h-[44px]"
         >
+          <option value="Kirana">Kirana</option>
           <option value="Market">Market</option>
           <option value="Staff">Staff</option>
         </select>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50"
+          className="w-full px-4 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 min-h-[44px]"
         >
           {loading ? "..." : "Add"}
         </button>
