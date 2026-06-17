@@ -64,7 +64,7 @@ const KpiCards = ({ stats }) => {
         subtextColor="text-amber-600"
       />
       <KpiCard
-        label="Labour Cost"
+        label="Staff Cost"
         value={formatCurrency(s.labourCost)}
         subtext={`${s.staffOnShift} staff on shift`}
         subtextColor="text-blue-600"

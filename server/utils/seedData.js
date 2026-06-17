@@ -39,19 +39,19 @@ const menuItems = [
 ];
 
 const seedDatabase = async () => {
-  const adminPassword = await bcrypt.hash("admin123", 10);
+  const adminPassword = await bcrypt.hash("ashu123", 10);
 
-  await User.deleteMany({ role: "admin" });
+  await User.deleteMany({});
 
   await User.create({
     name: "Admin",
-    username: "admin",
-    email: "admin@restaurant.com",
+    username: "Ashu",
+    mobile: "9999999999",
     password: adminPassword,
     role: "admin",
   });
 
-  console.log("Default admin created: username Admin / password admin123");
+  console.log("Default admin created: username Ashu / password ashu123");
 
   const menuCount = await Menu.countDocuments();
   if (menuCount === 0) {

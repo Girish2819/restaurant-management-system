@@ -14,6 +14,12 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    mobile: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     email: {
       type: String,
       lowercase: true,
@@ -39,6 +45,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["lady", "gents"],
       default: null,
+    },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      default: null,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     isActive: {
       type: Boolean,

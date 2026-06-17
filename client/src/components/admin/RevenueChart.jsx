@@ -64,8 +64,8 @@ const RevenueChart = ({ data, period, onPeriodChange }) => (
       </div>
     </div>
 
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-[300px] min-w-0">
+      <ResponsiveContainer width="99%" height={300}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
           <XAxis

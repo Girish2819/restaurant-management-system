@@ -3,16 +3,16 @@ import api from "../../api/axios";
 import { formatCurrency } from "../../utils/format";
 
 const CATEGORY_ICONS = {
-  groceries: "🥬",
-  utilities: "🔥",
-  labour: "👥",
+  Kirana: "🛒",
+  Market: "🥬",
+  Staff: "👥",
   other: "📦",
 };
 
 const AddExpense = ({ onAdded }) => {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("groceries");
+  const [category, setCategory] = useState("Kirana");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,7 +30,7 @@ const AddExpense = ({ onAdded }) => {
       });
       setName("");
       setAmount("");
-      setCategory("groceries");
+      setCategory("Kirana");
       onAdded();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to add expense");
@@ -68,9 +68,9 @@ const AddExpense = ({ onAdded }) => {
           onChange={(e) => setCategory(e.target.value)}
           className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300"
         >
-          <option value="groceries">Groceries</option>
-          <option value="utilities">Utilities</option>
-          <option value="labour">Labour</option>
+          <option value="Kirana">Kirana</option>
+          <option value="Market">Market</option>
+          <option value="Staff">Staff</option>
           <option value="other">Other</option>
         </select>
         <button

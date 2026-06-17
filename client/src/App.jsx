@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Login from "./pages/Login";
+import AuthLogin from "./pages/AuthLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminTakeOrder from "./pages/AdminTakeOrder";
 import MenuManagerPage from "./pages/MenuManagerPage";
 import WaiterDashboard from "./pages/WaiterDashboard";
+import Welcome from "./pages/Welcome";
 
 const RootRedirect = () => {
   const { user, loading } = useAuth();
@@ -17,7 +19,7 @@ const RootRedirect = () => {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/auth/login" replace />;
   return <Navigate to={user.role === "admin" ? "/admin" : "/waiter"} replace />;
 };
 
@@ -26,34 +28,47 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/menu-manager"
-            element={
-              <ProtectedRoute role="admin">
-                <MenuManagerPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/waiter"
-            element={
-              <ProtectedRoute role="waiter">
-                <WaiterDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<RootRedirect />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+  <Route path="/" element={<Welcome />} />
+  <Route path="/auth/login" element={<AuthLogin />} />
+
+  <Route
+    path="/admin"
+    element={
+      <ProtectedRoute role="admin">
+        <AdminDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/admin/menu-manager"
+    element={
+      <ProtectedRoute role="admin">
+        <MenuManagerPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/admin/take-order"
+    element={
+      <ProtectedRoute role="admin">
+        <AdminTakeOrder />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/waiter"
+    element={
+      <ProtectedRoute role="waiter">
+        <WaiterDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route path="*" element={<Navigate to="/" replace />} />
+</Routes>
       </BrowserRouter>
     </AuthProvider>
   );

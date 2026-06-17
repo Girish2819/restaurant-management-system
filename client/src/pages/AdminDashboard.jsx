@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import KpiCards from "../components/admin/KpiCards";
@@ -7,7 +8,6 @@ import RecentExpenses from "../components/admin/RecentExpenses";
 import RevenueChart from "../components/admin/RevenueChart";
 import CreateWaiterModal from "../components/admin/CreateWaiterModal";
 import WaiterList from "../components/admin/WaiterList";
-import MenuManager from "../components/admin/MenuManager";
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -17,6 +17,7 @@ const getGreeting = () => {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -25,7 +26,6 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState([]);
   const [chartPeriod, setChartPeriod] = useState("week");
   const [showWaiterModal, setShowWaiterModal] = useState(false);
-  const [showAllRecords, setShowAllRecords] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -33,8 +33,8 @@ const AdminDashboard = () => {
       const [statsRes, ordersRes, expensesRes, chartRes, waitersRes] =
         await Promise.all([
           api.get("/dashboard/stats"),
-          api.get(`/orders/recent?all=${showAllRecords}`),
-          api.get(`/expenses?all=${showAllRecords}`),
+          api.get(`/orders/recent?all=false`),
+          api.get(`/expenses?all=false`),
           api.get(`/dashboard/chart?period=${chartPeriod}`),
           api.get("/auth/waiters"),
         ]);
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [chartPeriod, showAllRecords]);
+  }, [chartPeriod]);
 
   useEffect(() => {
     fetchData();
@@ -57,10 +57,8 @@ const AdminDashboard = () => {
   }, [fetchData]);
 
   const today = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
   });
 
   if (loading) {
@@ -80,51 +78,20 @@ const AdminDashboard = () => {
               {getGreeting()}, {user?.name || "Chef"} 👨‍🍳
             </h1>
             <p className="text-slate-600 text-sm">
-              Here&apos;s how your restaurant is performing today.
+              आशा है आपका दिन मंगलमय हो।
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <span className="hidden sm:inline-block text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-4 py-2">
+            <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-4 py-2">
               {today}
             </span>
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setShowAllRecords(false)}
-                className={`text-xs font-medium rounded-full px-3 py-2 transition ${
-                  !showAllRecords
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAllRecords(true)}
-                className={`text-xs font-medium rounded-full px-3 py-2 transition ${
-                  showAllRecords
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                All
-              </button>
-            </div>
-            {/* <button
+            <button
               type="button"
-              onClick={() => setShowWaiterModal(true)}
-              className="text-xs bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+              onClick={() => navigate("/admin/take-order")}
+              className="text-xs bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800 transition"
             >
-              + Add Waiter
-            </button> */}
-            {/* <button
-              type="button"
-              onClick={logout}
-              className="text-xs text-slate-600 hover:text-slate-900 transition-colors px-3 py-2"
-            >
-              Logout
-            </button> */}
+              Take Order
+            </button>
           </div>
         </header>
 
@@ -134,7 +101,18 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <RecentOrders orders={orders} />
-          <RecentExpenses expenses={expenses} onExpenseAdded={fetchData} />
+          <div className="flex flex-col gap-4">
+            <button
+              type="button"
+              onClick={() => document.getElementById("expense-section").scrollIntoView({ behavior: "smooth" })}
+              className="text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors w-fit"
+            >
+              View All Expenses
+            </button>
+            <div id="expense-section">
+              <RecentExpenses expenses={expenses} onExpenseAdded={fetchData} />
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -167,15 +145,22 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-      <div className="flex justify-center mt-10 mb-10">
-      <button
-        type="button"
-        onClick={logout}
-        className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md"
-      >
-        Logout
-      </button>
-    </div>
+      <div className="flex justify-center gap-4 mt-10 mb-10">
+        <button
+          type="button"
+          onClick={() => navigate("/admin/take-order")}
+          className="bg-slate-900 text-white px-8 py-3 rounded-xl hover:bg-slate-800 transition-colors shadow-md"
+        >
+          Take Order
+        </button>
+        <button
+          type="button"
+          onClick={logout}
+          className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-colors shadow-md"
+        >
+          Logout
+        </button>
+      </div>
 
       <CreateWaiterModal
         isOpen={showWaiterModal}
