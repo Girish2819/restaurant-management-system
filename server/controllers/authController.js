@@ -9,25 +9,20 @@ export const login = async (req, res) => {
     if (!username?.trim() || !password?.trim()) {
       return res.status(400).json({ message: "Username and password are required" });
     }
-   const user = await User.findOne({
-  username: { $regex: new RegExp(`^${username.trim()}$`, "i") }
-});
 
-console.log("USERNAME ENTERED:", username);
-console.log("USER FOUND:", user?.username);
-console.log("ACTIVE:", user?.isActive);
+    const user = await User.findOne({
+      username: { $regex: new RegExp(`^${username.trim()}$`, "i") },
+    });
 
-if (!user || !user.isActive) {
-  return res.status(401).json({ message: "Invalid credentials" });
-}
+    if (!user || !user.isActive) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-console.log("PASSWORD MATCH:", isMatch);
-
-if (!isMatch) {
-  return res.status(401).json({ message: "Invalid credentials" });
-}
     res.json({
       _id: user._id,
       name: user.name,
@@ -54,11 +49,18 @@ export const createWaiter = async (req, res) => {
     if (!phone?.trim()) {
       return res.status(400).json({ message: "Member phone number is required" });
     }
+
+    const existingPhone = await User.findOne({ mobile: phone.trim() });
+    if (existingPhone) {
+      return res.status(400).json({ message: "Phone number already registered" });
+    }
+
     const allowedRoles = ["waiter", "chef", "helper"];
     const memberRole = allowedRoles.includes(role) ? role : "waiter";
     const username = await generateUsername(name);
     const plainPassword = generatePassword();
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
     const member = await User.create({
       name: name.trim(),
       mobile: phone.trim(),
@@ -66,26 +68,35 @@ export const createWaiter = async (req, res) => {
       password: hashedPassword,
       role: memberRole,
       gender: gender || null,
-      restaurantId: req.user.restaurantId,
+      restaurantId: req.user.restaurantId || null,
       isVerified: true,
+      isActive: true,
     });
+
     res.status(201).json({
       _id: member._id,
       name: member.name,
       username: member.username,
+      mobile: member.mobile,
       role: member.role,
       generatedPassword: plainPassword,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Phone or username already exists" });
+    }
     res.status(500).json({ message: error.message });
   }
 };
 
 export const getWaiters = async (req, res) => {
   try {
-    const members = await User.find({ role: { $ne: "admin" }, isActive: true }).select(
-      "-password"
-    );
+    const filter = { role: { $ne: "admin" }, isActive: true };
+    if (req.user.restaurantId) {
+      filter.restaurantId = req.user.restaurantId;
+    }
+
+    const members = await User.find(filter).select("-password").sort({ createdAt: -1 });
     res.json(members);
   } catch (error) {
     res.status(500).json({ message: error.message });

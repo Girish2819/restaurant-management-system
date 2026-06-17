@@ -45,44 +45,61 @@ export const getDashboardStats = async (req, res) => {
     const yesterdayOrderCount = yesterdayOrders.length;
     const ordersDiff = totalOrders - yesterdayOrderCount;
 
-    const totalRevenue = todayOrders.reduce((sum, o) => sum + o.amount, 0);
+    const totalRevenue = todayOrders.reduce(
+      (sum, o) => sum + o.amount,
+      0
+    );
+
     const yesterdayRevenue = yesterdayOrders.reduce(
       (sum, o) => sum + o.amount,
       0
     );
+
     const revenueChange =
       yesterdayRevenue > 0
         ? Math.round(
-            ((totalRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
-          )
+          ((totalRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+        )
         : 0;
 
-    const totalExpenses = todayExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const yesterdayExpenseTotal = yesterdayExpenses.reduce(
-      (sum, e) => sum + e.amount,
-      0
-    );
+    // Staff Cost
+    const labourExpenses = todayExpenses
+      .filter((e) => e.category?.toLowerCase() === "staff")
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    // Expenses excluding Staff Cost
+    const totalExpenses = todayExpenses
+      .filter((e) => e.category?.toLowerCase() !== "staff")
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    const yesterdayExpenseTotal = yesterdayExpenses
+      .filter((e) => e.category?.toLowerCase() !== "staff")
+      .reduce((sum, e) => sum + e.amount, 0);
+
     const expenseChange =
       yesterdayExpenseTotal > 0
         ? Math.round(
-            ((totalExpenses - yesterdayExpenseTotal) / yesterdayExpenseTotal) *
-              100
-          )
+          ((totalExpenses - yesterdayExpenseTotal) /
+            yesterdayExpenseTotal) *
+          100
+        )
         : 0;
 
-    const labourExpenses = todayExpenses
-      .filter((e) => e.category === "labour")
-      .reduce((sum, e) => sum + e.amount, 0);
+    console.log("Today's Expenses:", todayExpenses);
 
     const staffOnShift = await User.countDocuments({
       role: "waiter",
       isActive: true,
     });
 
-    const netProfit = totalRevenue - totalExpenses - labourExpenses;
-    const margin =
-      totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+    // Profit = Revenue - Expenses - Staff Cost
+    const netProfit =
+      totalRevenue - totalExpenses - labourExpenses;
 
+    const margin =
+      totalRevenue > 0
+        ? Math.round((netProfit / totalRevenue) * 100)
+        : 0;
     res.json({
       totalOrders,
       ordersDiff,
@@ -123,7 +140,7 @@ export const getChartData = async (req, res) => {
       const revenue = orders.reduce((sum, o) => sum + o.amount, 0);
       const expenseTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
       const labour = expenses
-        .filter((e) => e.category === "labour")
+        .filter((e) => e.category?.toLowerCase() === "staff")
         .reduce((sum, e) => sum + e.amount, 0);
 
       const label =
