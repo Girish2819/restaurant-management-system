@@ -45,12 +45,12 @@ const seedDatabase = async () => {
     const adminPassword = await bcrypt.hash("ashu123", 10);
     await User.create({
       name: "Admin",
-      username: "Ashu",
+      username: "ASHU",
       mobile: "9999999999",
       password: adminPassword,
       role: "admin",
     });
-    console.log("Default admin created: username Ashu / password ashu123");
+    console.log("Default admin created: username ASHU / password ashu123");
   }
 
   const menuCount = await Menu.countDocuments();
