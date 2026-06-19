@@ -44,8 +44,8 @@ const seedDatabase = async () => {
   if (!adminExists) {
     const adminPassword = await bcrypt.hash("ashu123", 10);
     await User.create({
-      name: "Admin",
-      username: "ASHU",
+      name: "Ashutosh",
+      username: "ashu123",
       mobile: "9999999999",
       password: adminPassword,
       role: "admin",
